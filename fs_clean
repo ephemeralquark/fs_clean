@@ -1,0 +1,10 @@
+#!/usr/bin/env python3
+"""Convenience wrapper to run the duplicate file finder from the repository root."""
+
+import sys
+
+from src.dupes import main
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
