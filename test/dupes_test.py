@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 # Make dupes importable regardless of working directory
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 import dupes  # noqa: E402
 
 
