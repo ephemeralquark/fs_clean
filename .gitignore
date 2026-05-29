@@ -1,0 +1,31 @@
+# Byte-compiled / optimized / cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+env/
+.env/
+
+# Editor/IDE specific files
+.vscode/
+.idea/
+*.sublime-workspace
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# OS and system files
+.DS_Store
+
+# Dependency and package manager specific files
+pip-log.txt
+htmlcov/
+.pytest_cache/
+.coverage
+.tox/
