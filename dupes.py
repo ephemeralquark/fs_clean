@@ -86,7 +86,7 @@ def find_duplicates(root: Path) -> list[list[dict]]:
 
 # ---------- formatting ----------
 
-def _human(n: int) -> str:
+def _human(n: float) -> str:
     """Return a human-readable byte string."""
     for unit in ("B", "KB", "MB", "GB", "TB"):
         if abs(n) < 1024:
