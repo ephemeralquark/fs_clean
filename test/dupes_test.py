@@ -5,15 +5,12 @@ group formatting, and command-line interface logic for the 'dupes' utility.
 
 import json
 import os
-import sys
+# import sys
 from pathlib import Path
 
 import pytest
 
-# Make dupes importable regardless of working directory
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-import dupes  # noqa: E402
-
+import dupes
 
 class TestHuman:
     """
