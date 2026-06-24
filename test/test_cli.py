@@ -1,120 +1,13 @@
-"""Unit tests for dupes.py.
-This file contains unit tests covering file size formatting, MD5 hashing, directory scanning,
-group formatting, and command-line interface logic for the 'dupes' utility.
-"""
+"""Tests for CLI (command-line interface)."""
 
 import json
 import os
-# import sys
+import re
 from pathlib import Path
 
 import pytest
 
 import dupes
-
-class TestHuman:
-    """
-    Tests the functionality of dupes._human(), which converts raw byte counts
-    into human-readable formats (e.g., "1.5 MB", "1024.0 PB").
-    """
-    def test_bytes(self):
-        """Tests the basic formatting for zero and small byte values."""
-        assert dupes._human(0) == "0.0 B"
-        assert dupes._human(1) == "1.0 B"
-        assert dupes._human(999) == "999.0 B"
-
-    def test_kilobytes(self):
-        """Tests correct conversion and formatting for kilobytes (KB)."""
-        assert dupes._human(1024) == "1.0 KB"
-        assert dupes._human(1536) == "1.5 KB"
-        assert dupes._human(10240) == "10.0 KB"
-
-    def test_megabytes(self):
-        """Tests correct conversion and formatting for megabytes (MB)."""
-        assert dupes._human(1048576) == "1.0 MB"
-        assert dupes._human(5242880) == "5.0 MB"
-
-    def test_gigabytes(self):
-        """Tests correct conversion and formatting for gigabytes (GB)."""
-        assert dupes._human(1073741824) == "1.0 GB"
-
-    def test_terabytes(self):
-        """Tests correct conversion and formatting for terabytes (TB)."""
-        assert dupes._human(1099511627776) == "1.0 TB"
-
-    def test_petabytes(self):
-        """Tests correct conversion and formatting for petabytes (PB)."""
-        # The calculation 1099511627776 * 1024 results in 2^50 bytes (1 PB).
-        assert dupes._human(1099511627776 * 1024) == "1.0 PB"
-
-
-class TestFileMd5:
-    """
-    Validates the content hashing functionality (file_md5) used by the utility
-    to determine if files are duplicates. This class ensures the MD5 hash correctly
-    reflects the file's actual content, covering edge cases such as empty files,
-    files with specific known content, and proper handling of file read permission errors.
-    """
-    def test_empty_file(self, tmp_path: Path):
-        """Verifies that the MD5 hash for an empty file is correct."""
-        f = tmp_path / "empty"
-        f.touch()
-        assert dupes.file_md5(f) == "d41d8cd98f00b204e9800998ecf8427e"
-
-    def test_known_content(self, tmp_path: Path):
-        """Verifies the MD5 hash for a standard known string ('hello')."""
-        f = tmp_path / "hello"
-        f.write_text("hello", encoding="utf-8")
-        assert dupes.file_md5(f) == "5d41402abc4b2a76b9719d911017c592"
-
-    def test_large_file(self, tmp_path: Path):
-        """
-        Tests hashing consistency and correctness for large files,
-        simulating a multi-block read scenario.
-        """
-        f = tmp_path / "big"
-        data = os.urandom(200_000)
-        f.write_bytes(data)
-        expected = dupes.file_md5(tmp_path / "big")
-        # Read twice with different instances should match
-        assert dupes.file_md5(f) == expected
-
-    def test_permission_error(self, tmp_path: Path):
-        """
-        Ensures the utility gracefully handles files where read permissions are denied.
-        It should raise an OSError.
-        """
-        f = tmp_path / "nope"
-        f.touch()
-        f.chmod(0o000)
-        with pytest.raises(OSError):
-            dupes.file_md5(f)
-        f.chmod(0o644)  # restore so cleanup works
-
-
-class TestScan:
-    """
-    Tests dupes.scan(), which recursively traverses a directory.
-    Checks for file discovery, path inclusion, filtering (hidden files, empty dirs),
-    and correct metadata retrieval (size, mtime).
-    """
-    def test_empty_dir(self, tmp_path: Path):
-        """Verifies that scanning an empty directory returns an empty list."""
-        assert dupes.scan(tmp_path) == []
-
-    def test_files(self, tmp_path: Path):
-        """
-        Tests basic file and subdirectory discovery.
-        Checks that files in the current directory and subdirectories are included.
-        """
-        (tmp_path / "a.txt").write_text("x")
-        (tmp_path / "sub").mkdir()
-        (tmp_path / "sub" / "b.txt").write_text("y")
-        results = dupes.scan(tmp_path)
-        assert len(results) == 2
-        paths = {r["path"] for r in results}
-        assert (tmp_path / "a.txt").resolve() in {p.resolve() for p in paths}
-        assert (tmp_path / "sub" / "b.txt").resolve() in {p.resolve() for p in paths}
 
 
 class TestCLI:
@@ -122,6 +15,7 @@ class TestCLI:
     Tests the command-line execution paths of the tool, including
     error handling, different output formats (text/JSON), and delete logic.
     """
+
     def test_nonexistent_dir(self, capsys):
         """Tests that the program exits with an appropriate error message if the path does not exist."""
         with pytest.raises(SystemExit):
@@ -147,7 +41,6 @@ class TestCLI:
         dupes.main([str(tmp_path), "--format", "json"])
         captured = capsys.readouterr()
         # Use regex to extract the full JSON structure, handling multi-line output
-        import re
         json_match = re.search(r"(\{[\s\S]*\})", captured.out)
         assert json_match is not None
         data = json.loads(json_match.group(1))
@@ -211,6 +104,7 @@ class TestIntegration:
     Tests the end-to-end workflow, combining directory scanning (find_duplicates)
     with the final output formatting (format_groups) on a complex filesystem tree.
     """
+
     def test_complex_tree(self, tmp_path: Path):
         """Multi-level tree with mixed duplicates. Verifies grouping across paths."""
         root = tmp_path
