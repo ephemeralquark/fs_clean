@@ -40,42 +40,29 @@ def scan(root: Path, *, skip_hidden: bool = True, skip_sizes: set[int] | None = 
     return files
 
 
-class Scanner:
-    """Scan directories and detect duplicate files."""
-
-    @staticmethod
-    def scan(root: Path, *, skip_hidden: bool = True, skip_sizes: set[int] | None = None) -> list[dict]:
-        return scan(root, skip_hidden=skip_hidden, skip_sizes=skip_sizes)
-
-    @staticmethod
-    def find_duplicates(root: Path) -> list[list[dict]]:
-        """Return groups of duplicate files (each group has 2+ entries)."""
-        # 1) group by size (fast pre-filter)
-        by_size = defaultdict(list)
-        for f in scan(root):
-            by_size[f["size"]].append(f)
-
-        # 2) for groups with 2+ same-size files, hash to confirm
-        dupes: list[list[dict]] = []
-        for size, group in by_size.items():
-            if len(group) < 2:
-                continue
-            by_hash = defaultdict(list)
-            for f in group:
-                try:
-                    f["md5"] = Hasher.file_md5(f["path"])
-                except OSError:
-                    continue
-                by_hash[f["md5"]].append(f)
-
-            for digest, members in by_hash.items():
-                if len(members) >= 2:
-                    members[0]["md5"] = digest  # keep digest on first entry
-                    dupes.append(members)
-
-        return dupes
-
-
 def find_duplicates(root: Path) -> list[list[dict]]:
     """Return groups of duplicate files (each group has 2+ entries)."""
-    return Scanner.find_duplicates(root)
+    # 1) group by size (fast pre-filter)
+    by_size = defaultdict(list)
+    for f in scan(root):
+        by_size[f["size"]].append(f)
+
+    # 2) for groups with 2+ same-size files, hash to confirm
+    dupes: list[list[dict]] = []
+    for size, group in by_size.items():
+        if len(group) < 2:
+            continue
+        by_hash = defaultdict(list)
+        for f in group:
+            try:
+                f["md5"] = Hasher.file_md5(f["path"])
+            except OSError:
+                continue
+            by_hash[f["md5"]].append(f)
+
+        for digest, members in by_hash.items():
+            if len(members) >= 2:
+                members[0]["md5"] = digest  # keep digest on first entry
+                dupes.append(members)
+
+    return dupes

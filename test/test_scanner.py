@@ -1,4 +1,4 @@
-"""Tests for Scanner (directory scanning)."""
+"""Tests for scanning (directory traversal)."""
 
 from pathlib import Path
 
