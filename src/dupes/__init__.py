@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from .hasher import file_md5
 from .scanner import scan, find_duplicates
-from .formatters import _human, format_groups
+from .formatter import _human, format_groups
 from .cli import cmd_parse, main
 
 __all__ = [

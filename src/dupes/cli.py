@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 from .scanner import find_duplicates, scan
-from .formatters import format_groups
+from .formatter import format_groups
 
 
 def cmd_parse(args: list[str] | None = None) -> argparse.Namespace:
