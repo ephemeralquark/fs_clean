@@ -28,15 +28,3 @@ def format_groups(groups: list[list[dict]]) -> str:
     lines.append(f"Found {len(groups)} group(s), {sum(len(g) for g in groups)} file(s) total, "
                      f"{_human(total_waste)} recoverable")
     return "\n".join(lines)
-
-
-class Formatter:
-    """Format duplicate file groups for display."""
-
-    @staticmethod
-    def human(n: float) -> str:
-        return _human(n)
-
-    @staticmethod
-    def format_groups(groups: list[list[dict]]) -> str:
-        return format_groups(groups)

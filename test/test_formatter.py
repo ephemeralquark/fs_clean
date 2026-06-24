@@ -1,4 +1,4 @@
-"""Tests for Formatter (human-readable sizes, group formatting)."""
+"""Tests for formatting helpers."""
 
 from pathlib import Path
 
