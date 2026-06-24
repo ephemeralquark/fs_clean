@@ -1,4 +1,4 @@
-"""Tests for Hasher (MD5 file hashing)."""
+"""Tests for hasher (MD5 file hashing)."""
 
 import os
 from pathlib import Path

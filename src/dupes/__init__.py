@@ -1,17 +1,13 @@
 """Duplicate file finder — scan a directory tree and identify files with identical content."""
 
-from .hashers import Hasher
-from .hashers import file_md5 as _file_md5  # type: ignore[misc] # noqa: F401
+from __future__ import annotations
 
+from .hasher import file_md5
 from .scanner import scan, find_duplicates
 from .formatters import _human, format_groups
 from .cli import cmd_parse, main
 
-# Module-level re-exports for backwards compatibility
-file_md5 = _file_md5
-
 __all__ = [
-    "Hasher",
     "file_md5",
     "scan",
     "find_duplicates",

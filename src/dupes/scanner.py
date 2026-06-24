@@ -6,7 +6,7 @@ import os
 from collections import defaultdict
 from pathlib import Path
 
-from .hashers import Hasher
+from .hasher import file_md5
 
 
 def scan(root: Path, *, skip_hidden: bool = True, skip_sizes: set[int] | None = None) -> list[dict]:
@@ -55,7 +55,7 @@ def find_duplicates(root: Path) -> list[list[dict]]:
         by_hash = defaultdict(list)
         for f in group:
             try:
-                f["md5"] = Hasher.file_md5(f["path"])
+                f["md5"] = file_md5(f["path"])
             except OSError:
                 continue
             by_hash[f["md5"]].append(f)
