@@ -4,8 +4,8 @@ A small utility for scanning a directory tree and identifying duplicate files by
 
 ## Project layout
 
-- `src/dupes.py` - main source module
-- `test/dupes_test.py` - unit tests for the utility
+- `src/dupes/` - source package (cli, detector, scanner, deleter, formatter)
+- `test/` - unit tests
 - `pyproject.toml` - pytest configuration for `src` and `test`
 
 ## Requirements
@@ -18,10 +18,10 @@ No install is required for this repository. Use the repository root as the worki
 
 ## Usage
 
-Run the CLI directly:
+Run the CLI via the package:
 
 ```bash
-python fs_clean /path/to/directory
+python -m dupes /path/to/directory
 ```
 
 Options:
@@ -34,7 +34,7 @@ Options:
 Example:
 
 ```bash
-python src/dupes.py /tmp/data --format json
+python -m dupes /tmp/data --format json
 ```
 
 ## Testing
@@ -50,3 +50,7 @@ python -m pytest -q
 - Source files live in `src/`
 - Tests live in `test/`
 - `pyproject.toml` configures pytest to add `src` to `PYTHONPATH`
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
