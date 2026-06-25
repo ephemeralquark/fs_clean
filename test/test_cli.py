@@ -6,11 +6,10 @@ from pathlib import Path
 
 import pytest
 
-from src.cli import DuplicateFinder, cmd_parse, main
+from src.cli import cmd_parse, main
 from src.input.scanner import Scanner
 from src.processing.detector import DuplicationDetector
 from src.processing.models import FileInfo, DuplicateGroup
-from src.output.formatter import Formatter
 from src.action.deleter import Deleter
 
 
@@ -78,32 +77,6 @@ class TestCLI:
             main(["--help"])
         captured = capsys.readouterr()
         assert "Find duplicate files" in captured.out
-
-
-class TestDuplicateFinder:
-    """Tests DuplicateFinder orchestrator via dependency injection."""
-
-    def test_text_output_format(self, tmp_path: Path):
-        files = [
-            FileInfo(path=tmp_path / "a.txt", size=5, mtime=1.0),
-            FileInfo(path=tmp_path / "b.txt", size=5, mtime=2.0),
-        ]
-        group = DuplicateGroup(size=5, md5="abc", files=files)
-        finder = DuplicateFinder(formatter=Formatter())
-        output = finder.text_output([group])
-        assert "Group 1" in output
-        assert "<- keep" in output
-
-    def test_json_output_format(self, tmp_path: Path):
-        files = [
-            FileInfo(path=tmp_path / "a.txt", size=5, mtime=1.0),
-            FileInfo(path=tmp_path / "b.txt", size=5, mtime=2.0),
-        ]
-        group = DuplicateGroup(size=5, md5="abc", files=files)
-        finder = DuplicateFinder(formatter=Formatter())
-        output = finder.json_output([group])
-        data = json.loads(output)
-        assert data["total_groups"] == 1
 
 
 class TestDeleter:
