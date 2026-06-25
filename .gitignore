@@ -29,3 +29,6 @@ htmlcov/
 .pytest_cache/
 .coverage
 .tox/
+
+# JSON output files
+*.json
