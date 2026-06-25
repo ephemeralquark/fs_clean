@@ -1,4 +1,4 @@
-"""Tests for scanning (directory traversal)."""
+"""Tests for Scanner (directory traversal)."""
 
 from pathlib import Path
 
@@ -6,26 +6,43 @@ import dupes
 
 
 class TestScan:
-    """
-    Tests dupes.scan(), which recursively traverses a directory.
-    Checks for file discovery, path inclusion, filtering (hidden files, empty dirs),
-    and correct metadata retrieval (size, mtime).
-    """
+    """Tests dupes.Scanner.scan()."""
 
     def test_empty_dir(self, tmp_path: Path):
-        """Verifies that scanning an empty directory returns an empty list."""
-        assert dupes.scan(tmp_path) == []
+        scanner = dupes.Scanner()
+        assert scanner.scan(tmp_path) == []
 
     def test_files(self, tmp_path: Path):
-        """
-        Tests basic file and subdirectory discovery.
-        Checks that files in the current directory and subdirectories are included.
-        """
         (tmp_path / "a.txt").write_text("x")
         (tmp_path / "sub").mkdir()
         (tmp_path / "sub" / "b.txt").write_text("y")
-        results = dupes.scan(tmp_path)
+        results = dupes.Scanner().scan(tmp_path)
         assert len(results) == 2
-        paths = {r["path"] for r in results}
-        assert (tmp_path / "a.txt").resolve() in {p.resolve() for p in paths}
-        assert (tmp_path / "sub" / "b.txt").resolve() in {p.resolve() for p in paths}
+        paths = {r.path for r in results}
+        assert (tmp_path / "a.txt").resolve() in paths
+        assert (tmp_path / "sub" / "b.txt").resolve() in paths
+
+    def test_skip_hidden(self, tmp_path: Path):
+        (tmp_path / ".hidden_file").write_text("x")
+        hidden_dir = tmp_path / ".hidden_dir"
+        hidden_dir.mkdir()
+        (hidden_dir / "inside.txt").write_text("y")
+        (tmp_path / "visible.txt").write_text("z")
+        results = dupes.Scanner().scan(tmp_path)
+        assert len(results) == 1
+        assert (tmp_path / "visible.txt").resolve() in {r.path for r in results}
+
+    def test_skip_sizes(self, tmp_path: Path):
+        (tmp_path / "zero.txt").write_text("")
+        (tmp_path / "nonzero.txt").write_text("hello")
+        scanner = dupes.Scanner()
+        results = scanner.scan(tmp_path, skip_sizes={0})
+        assert len(results) == 1
+        assert results[0].path.name == "nonzero.txt"
+
+    def test_metadata(self, tmp_path: Path):
+        f = tmp_path / "meta.txt"
+        f.write_text("data")
+        info = dupes.Scanner().scan(tmp_path)[0]
+        assert info.size == 4
+        assert isinstance(info.mtime, float)

@@ -2,17 +2,23 @@
 
 from __future__ import annotations
 
-from .hasher import file_md5
-from .scanner import scan, find_duplicates
-from .formatter import _human, format_groups
-from .cli import cmd_parse, main
+from .cli import DuplicateFinder, cmd_parse, main
+from .deleter import Deleter
+from .detector import DuplicationDetector
+from .formatter import Formatter
+from .hasher import Hasher
+from .models import DuplicateGroup, FileInfo
+from .scanner import Scanner
+
 
 __all__ = [
-    "file_md5",
-    "scan",
-    "find_duplicates",
-    "_human",
-    "format_groups",
     "cmd_parse",
+    "Deleter",
+    "DuplicateFinder",
+    "DuplicateGroup",
+    "FileInfo",
+    "Formatter",
+    "Hasher",
+    "Scanner",
     "main",
 ]

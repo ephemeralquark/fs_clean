@@ -3,15 +3,50 @@
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from pathlib import Path
 
-from .scanner import find_duplicates, scan
-from .formatter import format_groups
+from .deleter import Deleter
+from .detector import DuplicationDetector
+from .formatter import Formatter
+from .hasher import Hasher
+from .scanner import Scanner
 
 
-def cmd_parse(args: list[str] | None = None) -> argparse.Namespace:
+class DuplicateFinder:
+    """Top-level orchestrator: scans a directory, detects duplicates,
+    and delegates formatting / deletion to their own domain classes."""
+
+    def __init__(
+        self,
+        scanner: Scanner | None = None,
+        detector: DuplicationDetector | None = None,
+        formatter: Formatter | None = None,
+        deleter: Deleter | None = None,
+    ) -> None:
+        self.scanner = scanner if scanner is not None else Scanner()
+        self.detector = detector if detector is not None else DuplicationDetector()
+        self.formatter = formatter if formatter is not None else Formatter()
+        self.deleter = deleter if deleter is not None else Deleter()
+
+    def scan_and_find(self, root: Path, *, min_size: int = 0) -> list:
+        """Scan *root* and return duplicate groups filtered by *min_size*."""
+        files = self.scanner.scan(root)
+        groups = self.detector.find_duplicates(files)
+        if min_size > 0:
+            groups = [g for g in groups if g.size >= min_size]
+        return groups
+
+    def text_output(self, groups) -> str:
+        """Format *groups* as human-readable text."""
+        return self.formatter.format_groups(groups)
+
+    def json_output(self, groups) -> str:
+        """Format *groups* as JSON."""
+        return self.formatter.format_groups_json(groups)
+
+
+def cmd_parse(argv: list[str] | None = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(
         description="Find duplicate files in a directory tree.")
     p.add_argument("root", type=Path, help="Root directory to scan")
@@ -23,7 +58,7 @@ def cmd_parse(args: list[str] | None = None) -> argparse.Namespace:
                        dest="fmt", help="Output format")
     p.add_argument("--min-size", type=int, default=0,
                        help="Minimum file size in bytes to consider (default: 0)")
-    return p.parse_args(args)
+    return p.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -33,35 +68,19 @@ def main(argv: list[str] | None = None) -> None:
         print(f"Error: {ns.root} does not exist", file=sys.stderr)
         sys.exit(1)
 
+    finder = DuplicateFinder()
     print(f"Scanning {ns.root.resolve()} ...")
-    groups = find_duplicates(ns.root)
-    groups = [g for g in groups if g[0]["size"] >= ns.min_size]
+    groups = finder.scan_and_find(ns.root, min_size=ns.min_size)
 
     if ns.fmt == "json":
-        data = []
-        for g in groups:
-            data.append({
-                "size": g[0]["size"],
-                "md5": g[0]["md5"],
-                "files": [str(f["path"]) for f in g],
-            })
-        print(json.dumps({"groups": data, "total_groups": len(data)}, indent=2))
+        print(finder.json_output(groups))
         return
 
     # text mode
-    output = format_groups(groups)
-    print(output)
+    print(finder.text_output(groups))
 
     if ns.delete:
-        print()
+        deleter = Deleter()
         for group in groups:
-            for f in group[1:]:  # skip first = keep
-                target = f["path"]
-                action = "Would delete" if ns.dry_run else "Deleted"
-                try:
-                    if not ns.dry_run:
-                        target.unlink()
-                except OSError as exc:
-                    print(f"  ERROR deleting {target}: {exc}", file=sys.stderr)
-                    continue
-                print(f"  {action} {target}")
+            for status, path_str in deleter.delete_group(group, dry_run=ns.dry_run):
+                print(f"  {status} {path_str}")

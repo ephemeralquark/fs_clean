@@ -1,4 +1,4 @@
-"""Tests for formatting helpers."""
+"""Tests for Formatter (output rendering)."""
 
 from pathlib import Path
 
@@ -6,37 +6,61 @@ import dupes
 
 
 class TestHuman:
-    """
-    Tests the functionality of dupes._human(), which converts raw byte counts
-    into human-readable formats (e.g., "1.5 MB", "1024.0 PB").
-    """
+    """Tests Formatter._human() byte-to-human conversion."""
 
     def test_bytes(self):
-        """Tests the basic formatting for zero and small byte values."""
-        assert dupes._human(0) == "0.0 B"
-        assert dupes._human(1) == "1.0 B"
-        assert dupes._human(999) == "999.0 B"
+        f = dupes.Formatter()._human
+        assert f(0) == "0.0 B"
+        assert f(1) == "1.0 B"
+        assert f(999) == "999.0 B"
 
     def test_kilobytes(self):
-        """Tests correct conversion and formatting for kilobytes (KB)."""
-        assert dupes._human(1024) == "1.0 KB"
-        assert dupes._human(1536) == "1.5 KB"
-        assert dupes._human(10240) == "10.0 KB"
+        f = dupes.Formatter()._human
+        assert f(1024) == "1.0 KB"
+        assert f(1536) == "1.5 KB"
+        assert f(10240) == "10.0 KB"
 
     def test_megabytes(self):
-        """Tests correct conversion and formatting for megabytes (MB)."""
-        assert dupes._human(1048576) == "1.0 MB"
-        assert dupes._human(5242880) == "5.0 MB"
+        f = dupes.Formatter()._human
+        assert f(1048576) == "1.0 MB"
+        assert f(5242880) == "5.0 MB"
 
     def test_gigabytes(self):
-        """Tests correct conversion and formatting for gigabytes (GB)."""
-        assert dupes._human(1073741824) == "1.0 GB"
+        f = dupes.Formatter()._human
+        assert f(1073741824) == "1.0 GB"
 
     def test_terabytes(self):
-        """Tests correct conversion and formatting for terabytes (TB)."""
-        assert dupes._human(1099511627776) == "1.0 TB"
+        f = dupes.Formatter()._human
+        assert f(1099511627776) == "1.0 TB"
 
     def test_petabytes(self):
-        """Tests correct conversion and formatting for petabytes (PB)."""
-        # The calculation 1099511627776 * 1024 results in 2^50 bytes (1 PB).
-        assert dupes._human(1099511627776 * 1024) == "1.0 PB"
+        f = dupes.Formatter()._human
+        assert f(1099511627776 * 1024) == "1.0 PB"
+
+
+class TestFormatGroups:
+    """Tests Formatter.format_groups() end-to-end output."""
+
+    def test_text_output(self, tmp_path: Path):
+        files = [
+            dupes.FileInfo(path=tmp_path / "a.txt", size=5, mtime=1.0),
+            dupes.FileInfo(path=tmp_path / "b.txt", size=5, mtime=2.0),
+        ]
+        group = dupes.DuplicateGroup(size=5, md5="abc", files=files)
+        output = dupes.Formatter().format_groups([group])
+        assert "Group 1" in output
+        assert "(5.0 B each, 2 copies" in output
+        assert "recoverable" in output
+
+    def test_json_output(self, tmp_path: Path):
+        import json
+        files = [
+            dupes.FileInfo(path=tmp_path / "a.txt", size=5, mtime=1.0),
+            dupes.FileInfo(path=tmp_path / "b.txt", size=5, mtime=2.0),
+        ]
+        group = dupes.DuplicateGroup(size=5, md5="abc", files=files)
+        output = dupes.Formatter().format_groups_json([group])
+        data = json.loads(output)
+        assert data["total_groups"] == 1
+        assert len(data["groups"][0]["files"]) == 2
+        assert data["groups"][0]["md5"] == "abc"
