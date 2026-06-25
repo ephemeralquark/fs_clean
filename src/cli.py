@@ -6,11 +6,11 @@ import argparse
 import sys
 from pathlib import Path
 
-from .deleter import Deleter
-from .detector import DuplicationDetector
-from .formatter import Formatter
-from .hasher import Hasher
-from .scanner import Scanner
+from .action.deleter import Deleter
+from .processing.detector import DuplicationDetector
+from .output.formatter import Formatter
+from .input.hasher import Hasher
+from .input.scanner import Scanner
 
 
 class DuplicateFinder:

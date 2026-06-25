@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import defaultdict
 
 from .models import DuplicateGroup, FileInfo
-from .hasher import Hasher
+from ..input.hasher import Hasher
 
 
 class DuplicationDetector:

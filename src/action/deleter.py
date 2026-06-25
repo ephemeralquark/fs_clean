@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sys
 
-from .models import DuplicateGroup
+from ..processing.models import DuplicateGroup
 
 
 class Deleter:

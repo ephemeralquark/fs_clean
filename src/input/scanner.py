@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from .models import FileInfo
+from ..processing.models import FileInfo
 
 
 class Scanner:
