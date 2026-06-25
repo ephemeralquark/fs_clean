@@ -4,7 +4,7 @@ A small utility for scanning a directory tree and identifying duplicate files by
 
 ## Project layout
 
-- `src/dupes/` - source package (cli, detector, scanner, deleter, formatter)
+- `src/` - source package (cli, detector, scanner, deleter, formatter)
 - `test/` - unit tests
 - `pyproject.toml` - pytest configuration for `src` and `test`
 
@@ -21,7 +21,7 @@ No install is required for this repository. Use the repository root as the worki
 Run the CLI via the package:
 
 ```bash
-python -m dupes /path/to/directory
+python -m src /path/to/directory
 ```
 
 Options:
@@ -34,7 +34,7 @@ Options:
 Example:
 
 ```bash
-python -m dupes /tmp/data --format json
+python -m src /tmp/data --format json
 ```
 
 ## Testing

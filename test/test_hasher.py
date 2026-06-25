@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-import dupes
+import src
 
 
 class TestFileMd5:
@@ -14,19 +14,19 @@ class TestFileMd5:
     def test_empty_file(self, tmp_path: Path):
         f = tmp_path / "empty"
         f.touch()
-        assert dupes.Hasher().hash(f) == "d41d8cd98f00b204e9800998ecf8427e"
+        assert src.Hasher().hash(f) == "d41d8cd98f00b204e9800998ecf8427e"
 
     def test_known_content(self, tmp_path: Path):
         f = tmp_path / "hello"
         f.write_text("hello", encoding="utf-8")
-        assert dupes.Hasher().hash(f) == "5d41402abc4b2a76b9719d911017c592"
+        assert src.Hasher().hash(f) == "5d41402abc4b2a76b9719d911017c592"
 
     def test_large_file(self, tmp_path: Path):
         f = tmp_path / "big"
         data = os.urandom(200_000)
         f.write_bytes(data)
-        first = dupes.Hasher().hash(f)
-        second = dupes.Hasher().hash(f)
+        first = src.Hasher().hash(f)
+        second = src.Hasher().hash(f)
         assert first == second
 
     def test_permission_error(self, tmp_path: Path):
@@ -34,12 +34,12 @@ class TestFileMd5:
         f.touch()
         f.chmod(0o000)
         with pytest.raises(OSError):
-            dupes.Hasher().hash(f)
+            src.Hasher().hash(f)
         f.chmod(0o644)  # restore so cleanup works
 
     def test_custom_buf_size(self, tmp_path: Path):
         f = tmp_path / "chunked"
         f.write_text("hello world")
-        h1 = dupes.Hasher().hash(f, buf_size=3)
-        h2 = dupes.Hasher().hash(f, buf_size=65536)
+        h1 = src.Hasher().hash(f, buf_size=3)
+        h2 = src.Hasher().hash(f, buf_size=65536)
         assert h1 == h2

@@ -1,4 +1,4 @@
-"""Entry point for: python -m dupes"""
+"""Allow running as `python -m src`."""
 
 from .cli import main
 

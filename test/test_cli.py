@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-import dupes
+import src
 
 
 class TestCLI:
@@ -14,13 +14,13 @@ class TestCLI:
 
     def test_nonexistent_dir(self, capsys):
         with pytest.raises(SystemExit):
-            dupes.main(["/no/such/dir"])
+            src.main(["/no/such/dir"])
         assert "does not exist" in capsys.readouterr().err
 
     def test_text_output(self, tmp_path: Path, capsys):
         (tmp_path / "a").write_text("same")
         (tmp_path / "b").write_text("same")
-        dupes.main([str(tmp_path)])
+        src.main([str(tmp_path)])
         captured = capsys.readouterr()
         assert "Group 1" in captured.out
         assert "recoverable" in captured.out
@@ -28,7 +28,7 @@ class TestCLI:
     def test_json_output(self, tmp_path: Path, capsys):
         (tmp_path / "a").write_text("same")
         (tmp_path / "b").write_text("same")
-        dupes.main([str(tmp_path), "--format", "json"])
+        src.main([str(tmp_path), "--format", "json"])
         captured = capsys.readouterr()
         json_match = re.search(r"(\{[\s\S]*\})", captured.out)
         assert json_match is not None
@@ -42,7 +42,7 @@ class TestCLI:
         b = tmp_path / "b"
         a.write_text("same")
         b.write_text("same")
-        dupes.main([str(tmp_path), "--dry-run", "--delete"])
+        src.main([str(tmp_path), "--dry-run", "--delete"])
         captured = capsys.readouterr()
         assert "Would delete" in captured.out
         assert a.exists()
@@ -53,7 +53,7 @@ class TestCLI:
         b = tmp_path / "b"
         a.write_text("same")
         b.write_text("same")
-        dupes.main([str(tmp_path), "--delete"])
+        src.main([str(tmp_path), "--delete"])
         captured = capsys.readouterr()
         assert "Deleted" in captured.out
         assert a.exists()  # kept
@@ -64,13 +64,13 @@ class TestCLI:
         (tmp_path / "b").write_text("tiny")
         (tmp_path / "c").write_text("larger file content")
         (tmp_path / "d").write_text("larger file content")
-        dupes.main([str(tmp_path), "--min-size", "20"])
+        src.main([str(tmp_path), "--min-size", "20"])
         captured = capsys.readouterr()
         assert "Group 1" not in captured.out
 
     def test_help(self, capsys):
         with pytest.raises(SystemExit):
-            dupes.main(["--help"])
+            src.main(["--help"])
         captured = capsys.readouterr()
         assert "Find duplicate files" in captured.out
 
@@ -80,22 +80,22 @@ class TestDuplicateFinder:
 
     def test_text_output_format(self, tmp_path: Path):
         files = [
-            dupes.FileInfo(path=tmp_path / "a.txt", size=5, mtime=1.0),
-            dupes.FileInfo(path=tmp_path / "b.txt", size=5, mtime=2.0),
+            src.FileInfo(path=tmp_path / "a.txt", size=5, mtime=1.0),
+            src.FileInfo(path=tmp_path / "b.txt", size=5, mtime=2.0),
         ]
-        group = dupes.DuplicateGroup(size=5, md5="abc", files=files)
-        finder = dupes.DuplicateFinder(formatter=dupes.Formatter())
+        group = src.DuplicateGroup(size=5, md5="abc", files=files)
+        finder = src.DuplicateFinder(formatter=src.Formatter())
         output = finder.text_output([group])
         assert "Group 1" in output
         assert "<- keep" in output
 
     def test_json_output_format(self, tmp_path: Path):
         files = [
-            dupes.FileInfo(path=tmp_path / "a.txt", size=5, mtime=1.0),
-            dupes.FileInfo(path=tmp_path / "b.txt", size=5, mtime=2.0),
+            src.FileInfo(path=tmp_path / "a.txt", size=5, mtime=1.0),
+            src.FileInfo(path=tmp_path / "b.txt", size=5, mtime=2.0),
         ]
-        group = dupes.DuplicateGroup(size=5, md5="abc", files=files)
-        finder = dupes.DuplicateFinder(formatter=dupes.Formatter())
+        group = src.DuplicateGroup(size=5, md5="abc", files=files)
+        finder = src.DuplicateFinder(formatter=src.Formatter())
         output = finder.json_output([group])
         data = json.loads(output)
         assert data["total_groups"] == 1
@@ -106,12 +106,12 @@ class TestDeleter:
 
     def test_list_deletions(self, tmp_path: Path):
         files = [
-            dupes.FileInfo(path=tmp_path / "a.txt", size=5, mtime=1.0),
-            dupes.FileInfo(path=tmp_path / "b.txt", size=5, mtime=2.0),
-            dupes.FileInfo(path=tmp_path / "c.txt", size=5, mtime=3.0),
+            src.FileInfo(path=tmp_path / "a.txt", size=5, mtime=1.0),
+            src.FileInfo(path=tmp_path / "b.txt", size=5, mtime=2.0),
+            src.FileInfo(path=tmp_path / "c.txt", size=5, mtime=3.0),
         ]
-        group = dupes.DuplicateGroup(size=5, md5="abc", files=files)
-        deleter = dupes.Deleter()
+        group = src.DuplicateGroup(size=5, md5="abc", files=files)
+        deleter = src.Deleter()
         result = deleter.list_deletions(group)
         assert len(result) == 2
         assert str(tmp_path / "b.txt") in result
@@ -123,11 +123,11 @@ class TestDeleter:
         a.write_text("same")
         b.write_text("same")
         files = [
-            dupes.FileInfo(path=a, size=4, mtime=1.0),
-            dupes.FileInfo(path=b, size=4, mtime=2.0),
+            src.FileInfo(path=a, size=4, mtime=1.0),
+            src.FileInfo(path=b, size=4, mtime=2.0),
         ]
-        group = dupes.DuplicateGroup(size=4, md5="abc", files=files)
-        deleter = dupes.Deleter()
+        group = src.DuplicateGroup(size=4, md5="abc", files=files)
+        deleter = src.Deleter()
         result = deleter.delete_group(group, dry_run=True)
         assert len(result) == 1
         assert result[0][0] == "Would delete"
@@ -142,12 +142,12 @@ class TestDeleter:
         b.write_text("same")
         c.write_text("same")
         files = [
-            dupes.FileInfo(path=a, size=4, mtime=1.0),
-            dupes.FileInfo(path=b, size=4, mtime=2.0),
-            dupes.FileInfo(path=c, size=4, mtime=3.0),
+            src.FileInfo(path=a, size=4, mtime=1.0),
+            src.FileInfo(path=b, size=4, mtime=2.0),
+            src.FileInfo(path=c, size=4, mtime=3.0),
         ]
-        group = dupes.DuplicateGroup(size=4, md5="abc", files=files)
-        deleter = dupes.Deleter()
+        group = src.DuplicateGroup(size=4, md5="abc", files=files)
+        deleter = src.Deleter()
         result = deleter.delete_group(group, dry_run=False)
         assert len(result) == 2
         assert all(r[0] == "Deleted" for r in result)
@@ -170,8 +170,8 @@ class TestIntegration:
         (root / "sub2" / "d.txt").write_text("copy1")
         (root / "unique.txt").write_text("only one")
 
-        scanner = dupes.Scanner()
-        detector = dupes.DuplicationDetector()
+        scanner = src.Scanner()
+        detector = src.DuplicationDetector()
         files = scanner.scan(root)
         groups = detector.find_duplicates(files)
 
@@ -191,11 +191,11 @@ class TestFileInfo:
     """Tests FileInfo model."""
 
     def test_frozen(self, tmp_path: Path):
-        info = dupes.FileInfo(path=Path(tmp_path), size=10, mtime=1.0)
+        info = src.FileInfo(path=Path(tmp_path), size=10, mtime=1.0)
         with pytest.raises(Exception):
             info.path = Path("/tmp/y")  # pyright: ignore[reportAttributeAccessIssue]
 
     def test_resolves_relative_path(self):
         abs_path = Path.cwd() / "x.txt"
-        info = dupes.FileInfo(path=Path("x.txt"), size=10, mtime=1.0)
+        info = src.FileInfo(path=Path("x.txt"), size=10, mtime=1.0)
         assert info.path == abs_path
